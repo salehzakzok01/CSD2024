@@ -1,0 +1,69 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Raspberry Pi Camera</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='styles.css') }}">
+</head>
+<body>
+    <div class="container">
+        <h1>Chemical Sensing Drone Stream</h1>
+        
+        <!-- Camera Stream -->
+        <img src="{{ url_for('video_feed') }}" width="640" height="480">
+        
+        <!-- Button Controls Below the Stream -->
+        <div class="controls">
+            <button id="takePhotoButton" onclick="takePhoto()">Take Photo</button>
+            <button id="startButton" onclick="startRecording()">Start Recording</button>
+            <button id="stopButton" onclick="stopRecording()" style.display = "none">Stop Recording</button>
+        </div>
+    </div>
+
+    <!-- JavaScript Functions -->
+    <script>
+        function takePhoto() {
+            // Initiate image download from the /capture_image endpoint
+            const url = '/capture_image';
+            const link = document.createElement('a');
+            link.href = url;
+            link.download = ''; // Will use server-supplied filename
+            link.click();
+        }
+
+        function startRecording() {
+            fetch('/start_recording')
+                .then(response => response.text())
+                .then(message => {
+                    alert(message);
+                    // Show stop button and hide start button
+                    document.getElementById("startButton").style.display = "none";
+                    document.getElementById("stopButton").style.display = "inline-block";
+                })
+                .catch(err => console.error('Error starting recording:', err));
+        }
+
+        function stopRecording() {
+            fetch('/stop_recording')
+                .then(response => response.blob())
+                .then(blob => {
+                    const url = window.URL.createObjectURL(blob);
+                    const a = document.createElement('a');
+                    a.style.display = 'none';
+                    a.href = url;
+                    a.download = 'recording.h264';
+                    document.body.appendChild(a);
+                    a.click();
+                    window.URL.revokeObjectURL(url);
+                    alert("Recording stopped and saved.");
+
+                    // Show start button and hide stop button
+                    document.getElementById("startButton").style.display = "inline-block";
+                    document.getElementById("stopButton").style.display = "none";
+                })
+                .catch(err => console.error('Error stopping recording:', err));
+        }
+    </script>
+</body>
+</html>
